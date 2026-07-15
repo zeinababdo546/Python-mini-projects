@@ -1,1 +1,95 @@
 
+# import modules
+import random
+import curses
+
+# initialize the curses Lib
+screen=curses.initscr() # return an object widow repres screen 
+
+# hide mouse cursor
+curses.curs_set(0)  # 0-->HIDE, 1-->SHOW , 2-->MORE SHOW
+
+# getmax screen height,weidth
+screen_hight, screen_weidth= screen.getmaxyx() #return tuple of (height,width)
+
+# create new window
+window = curses.newwin(screen_hight,screen_weidth,0,0)
+
+# allow window to capture keypad input
+window.keypad(1) #return none
+
+# set delay between key presses
+window.timeout(100) #100msec
+
+# initialize snake head position
+snake_x =screen_weidth//4 #intger division
+snake_y =  screen_hight//2
+
+# initialize snake body -->list
+snake =[
+    [snake_y,snake_x],
+    [snake_y,snake_x-1],
+    [snake_y,snake_x-2],
+]    
+
+# create food in the middle of window
+food = [screen_hight//2,screen_weidth//2]
+
+# add food using char pi from curses module
+window.addch(food[0], food[1], curses.ACS_PI)
+
+# set movement direction --> right
+key = curses.KEY_RIGHT
+
+# create Game loop that loops forever till player loses or quits the game
+while True:
+    # game starts now --> get next key that pressed by user
+    next_key = window.getch()
+    key = key if next_key==-1 else next_key      #user press any 
+
+    # ckeck snake collision
+    #  collided with the top or down edges 
+    #  with the left or right edges 
+    #  with itself
+    if snake[0][0] in [0,screen_hight-1] or snake[0][1] in [0,screen_weidth-1] or snake[0] in snake[1:] : 
+      curses.endwin() # close window
+      quit() # exit program
+
+    # did not collided ---> set new_head position
+    new_head= [snake[0][0],snake[0][1] ] # it will be updated according to the pressed direction
+
+    if key == curses.KEY_DOWN:
+      new_head[0] += 1    # increase y by 1 (height)
+    if key == curses.KEY_UP:
+      new_head[0] -= 1    # decrease y by 1 (height)
+    if key == curses.KEY_RIGHT:
+      new_head[1] += 1   
+    if key == curses.KEY_LEFT:
+      new_head[1] -= 1   
+
+    # insert the new_head in the first position of snake body
+    snake.insert(0, new_head)  
+    # notice that the snake lenght increased by 1
+
+    # check if snake ate food
+    if snake [0] == food:
+      food = None
+    # generate new food 
+      while food is None :
+          new_food = [
+              random.randint(1, screen_hight-1),
+              random.randint(1, screen_weidth-1)
+              ]
+
+          food = new_food if new_food not in snake else None  
+    # if its none return and generate another random food position
+
+      window.addch(food[0], food[1], curses.ACS_PI)
+    else : 
+      tail = snake.pop()
+      window.addch(tail[0], tail[1], ' ')
+
+    # Update snake position on screen 
+    # add snake head to the screen
+    window.addch(snake[0][0], snake[0][1], curses.ACS_CKBOARD) 
+    window.refresh()
